@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mail-triage"
+version = "0.1.0"
+description = "Read-only Microsoft 365 inbox triage for Midtown's toy chest"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [{name = "Thomas Bray", email = "thomas.bray@midtown.net"}]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0",
+    "mtg-microsoft-auth @ file:///C:/Users/ThomasBray/src/midtown-org-scan/microsoft-auth",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "black>=23.0.0", "ruff>=0.1.0"]
+
+[project.scripts]
+mail-triage = "mail_triage_cli.cli:main"
+
+[project.urls]
+Homepage = "https://midtown-technology-group.github.io/mail-triage/"
+Documentation = "https://midtown-technology-group.github.io/mail-triage/"
+Repository = "https://github.com/Midtown-Technology-Group/mail-triage"
+Issues = "https://github.com/Midtown-Technology-Group/mail-triage/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

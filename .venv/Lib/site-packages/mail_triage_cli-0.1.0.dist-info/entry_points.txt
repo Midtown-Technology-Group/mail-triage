@@ -1,0 +1,2 @@
+[console_scripts]
+mail-triage = mail_triage_cli.cli:main
