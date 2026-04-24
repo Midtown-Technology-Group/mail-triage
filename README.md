@@ -36,3 +36,7 @@ $env:MAIL_TRIAGE_ALLOW_BROKER='true'
 ## Project Site
 
 This repo includes a lightweight GitHub Pages site in `docs/`.
+
+## License
+
+GPL-3.0-or-later.
