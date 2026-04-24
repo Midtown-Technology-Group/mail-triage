@@ -3,8 +3,18 @@ param(
     [string[]]$Arguments
 )
 
+$ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$pythonScript = Join-Path $scriptDir "src\mail_triage_cli\cli.py"
+$projectRoot = Resolve-Path $scriptDir
+$venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
+$sharedSrc = "C:\Users\ThomasBray\src\midtown-org-scan\microsoft-auth\src"
+$toolSrc = Join-Path $projectRoot "src"
+
+if (Test-Path $venvPython) {
+    $env:PYTHONPATH = "$toolSrc;$sharedSrc;$env:PYTHONPATH"
+    & $venvPython $toolSrc\mail_triage_cli\cli.py @Arguments
+    exit $LASTEXITCODE
+}
 
 if ($env:VIRTUAL_ENV) {
     $pythonCmd = "python"
@@ -20,4 +30,6 @@ if ($env:VIRTUAL_ENV) {
     $pythonCmd = $pythonCmd.Source
 }
 
-& $pythonCmd $pythonScript @Arguments
+$env:PYTHONPATH = "$toolSrc;$sharedSrc;$env:PYTHONPATH"
+& $pythonCmd $toolSrc\mail_triage_cli\cli.py @Arguments
+exit $LASTEXITCODE

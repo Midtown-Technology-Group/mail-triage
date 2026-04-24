@@ -14,7 +14,7 @@ dependencies = [
     "typer>=0.9.0",
     "rich>=13.0.0",
     "pydantic>=2.0",
-    "mtg-microsoft-auth @ file:///C:/Users/ThomasBray/src/midtown-org-scan/microsoft-auth",
+    "mtg-microsoft-auth @ git+https://github.com/Midtown-Technology-Group/mtg-microsoft-auth.git@main",
 ]
 
 [project.optional-dependencies]
