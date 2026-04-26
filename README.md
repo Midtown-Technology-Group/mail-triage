@@ -28,6 +28,8 @@ $env:MAIL_TRIAGE_AUTH_MODE='wam'
 $env:MAIL_TRIAGE_ALLOW_BROKER='true'
 ```
 
+This toy now shares the Midtown Graph token cache with the other local toys by default, so a successful WAM sign-in in `todo`, `mail-triage`, `file-finder`, or `calendar-glance` should usually be reusable. Set `MTG_AUTH_CACHE_NAMESPACE` only when you want an isolated cache for testing. If your broker has multiple signed-in Microsoft accounts, set `MTG_AUTH_ACCOUNT_HINT` to the preferred UPN so silent reuse lands on the right mailbox before prompting.
+
 ## Usage
 
 ```powershell

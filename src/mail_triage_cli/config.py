@@ -9,6 +9,7 @@ WRITE_SCOPE = "Mail.ReadWrite"
 SEND_SCOPE = "Mail.Send"
 SHARED_WRITE_SCOPE = "Mail.ReadWrite.Shared"
 SHARED_SEND_SCOPE = "Mail.Send.Shared"
+DEFAULT_CACHE_NAMESPACE = "mtg-shared-microsoft-auth"
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -29,7 +30,8 @@ def load_auth_config() -> AuthConfig:
         tenant_id=os.environ.get("MAIL_TRIAGE_TENANT_ID", "common"),
         scopes=configured_scopes(),
         mode=AuthMode(os.environ.get("MAIL_TRIAGE_AUTH_MODE", "wam")),
-        cache_namespace="mail-triage-cli",
+        cache_namespace=os.environ.get("MTG_AUTH_CACHE_NAMESPACE", DEFAULT_CACHE_NAMESPACE),
+        account_hint=os.environ.get("MTG_AUTH_ACCOUNT_HINT"),
         allow_broker=_env_bool("MAIL_TRIAGE_ALLOW_BROKER", True),
     )
 
