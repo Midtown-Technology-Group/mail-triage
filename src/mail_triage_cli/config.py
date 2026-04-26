@@ -5,6 +5,10 @@ import os
 from mtg_microsoft_auth import AuthConfig, AuthMode
 
 REQUIRED_SCOPE = "Mail.ReadBasic"
+WRITE_SCOPE = "Mail.ReadWrite"
+SEND_SCOPE = "Mail.Send"
+SHARED_WRITE_SCOPE = "Mail.ReadWrite.Shared"
+SHARED_SEND_SCOPE = "Mail.Send.Shared"
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -31,4 +35,21 @@ def load_auth_config() -> AuthConfig:
 
 
 def has_required_scope() -> bool:
-    return REQUIRED_SCOPE in set(configured_scopes())
+    scopes = set(configured_scopes())
+    return REQUIRED_SCOPE in scopes or WRITE_SCOPE in scopes
+
+
+def has_write_scope(shared_mailbox: bool = False) -> bool:
+    scopes = set(configured_scopes())
+    needed = {WRITE_SCOPE}
+    if shared_mailbox:
+        needed.add(SHARED_WRITE_SCOPE)
+    return needed.issubset(scopes)
+
+
+def has_send_scope(shared_mailbox: bool = False) -> bool:
+    scopes = set(configured_scopes())
+    needed = {WRITE_SCOPE, SEND_SCOPE}
+    if shared_mailbox:
+        needed.update({SHARED_WRITE_SCOPE, SHARED_SEND_SCOPE})
+    return needed.issubset(scopes)

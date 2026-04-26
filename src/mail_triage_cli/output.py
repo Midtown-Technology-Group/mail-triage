@@ -36,3 +36,17 @@ class OutputRenderer:
         for row in rows:
             table.add_row(row.sender, str(row.unread_count), str(row.total_count))
         self.console.print(table)
+
+    def render_status(self, payload) -> None:
+        if self.mode == "json":
+            print(json.dumps(payload.model_dump(), separators=(",", ":")))
+            return
+        if hasattr(payload, "count"):
+            summary = f"{payload.action}: {payload.count} item(s) in {payload.mailbox}"
+            if getattr(payload, "folder", None):
+                summary += f" -> {payload.folder}"
+            self.console.print(summary)
+            return
+        if hasattr(payload, "to"):
+            recipients = ", ".join(payload.to)
+            self.console.print(f"send: {payload.subject} -> {recipients} via {payload.mailbox}")

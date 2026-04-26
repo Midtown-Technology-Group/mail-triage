@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mail Triage CLI</title>
+    <title>Mail Triage</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,8 +11,8 @@
         <div class="container">
             <div class="hero-card">
                 <div class="eyebrow">Midtown Toy Chest</div>
-                <h1>Mail Triage CLI</h1>
-                <p class="tagline">Read-only inbox triage for fast morning scanning, sender clustering, and machine-friendly output.</p>
+                <h1>Mail Triage</h1>
+                <p class="tagline">Inbox triage, delegated mail actions, and machine-friendly output for personal and shared mailbox workflows.</p>
                 <div class="actions">
                     <a class="btn btn-primary" href="https://github.com/Midtown-Technology-Group/mail-triage">View on GitHub</a>
                     <a class="btn btn-secondary" href="#install">Get Started</a>
@@ -27,13 +27,14 @@
                 <div class="grid">
                     <article class="card">
                         <h2>Scope</h2>
-                        <p class="scope-note">Uses `Mail.ReadBasic` only. No write permissions, no admin-consent creep.</p>
+                        <p class="scope-note">Supports `Mail.ReadBasic` for scanning, plus delegated write and shared-mail bundles for mutate and send workflows.</p>
                     </article>
                     <article class="card">
                         <h2>Commands</h2>
                         <ul class="bullet-list">
-                            <li><code>inbox</code> for recent message scanning</li>
-                            <li><code>senders</code> for quick sender clustering</li>
+                            <li><code>inbox</code> and <code>senders</code> for scanning and clustering</li>
+                            <li><code>read</code>, <code>unread</code>, <code>move</code>, and <code>delete</code> for inbox actions</li>
+                            <li><code>send</code> for personal and shared mailbox sends</li>
                             <li><code>--output json</code> for automation</li>
                         </ul>
                     </article>
@@ -50,10 +51,11 @@
                 <h2>Quick Start</h2>
                 <div class="code-block"><code>$env:MAIL_TRIAGE_CLIENT_ID='e02be6f7-063a-46a6-b2cc-109d5f51055c'
 $env:MAIL_TRIAGE_TENANT_ID='a3599b15-c39c-4b41-a219-7e24dd5b5190'
-$env:MAIL_TRIAGE_SCOPES='Mail.ReadBasic'
+$env:MAIL_TRIAGE_SCOPES='Mail.ReadWrite,Mail.Send'
 $env:MAIL_TRIAGE_AUTH_MODE='wam'
 $env:MAIL_TRIAGE_ALLOW_BROKER='true'
-.\invoke.ps1 inbox --unread-only --limit 10</code></div>
+.\invoke.ps1 inbox --unread-only --limit 10
+.\invoke.ps1 send --to person@example.com --subject "Status" --body "Hello"</code></div>
             </div>
         </section>
     </main>

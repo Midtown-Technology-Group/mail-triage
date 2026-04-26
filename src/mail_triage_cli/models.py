@@ -8,6 +8,7 @@ class MailItem(BaseModel):
     subject: str
     sender: str
     sender_address: str
+    mailbox: str = "me"
     received_at: str
     is_read: bool
     importance: str = "normal"
@@ -19,3 +20,18 @@ class SenderSummary(BaseModel):
     sender_address: str
     unread_count: int
     total_count: int
+
+
+class MailActionResult(BaseModel):
+    action: str
+    mailbox: str
+    count: int = 0
+    folder: str | None = None
+    ids: list[str] = []
+
+
+class SentMessageResult(BaseModel):
+    action: str = "send"
+    mailbox: str
+    to: list[str]
+    subject: str
