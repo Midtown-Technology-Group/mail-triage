@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Resolve-Path $scriptDir
 $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
-$sharedSrc = "C:\Users\ThomasBray\src\midtown-org-scan\microsoft-auth\src"
+$sharedSrc = "C:\Users\ThomasBray\src\Midtown-Technology-Group\mtg-microsoft-auth\src"
 $toolSrc = Join-Path $projectRoot "src"
 
 if (Test-Path $venvPython) {
