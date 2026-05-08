@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
 
 from mail_triage_cli.cli import app
+from mail_triage_cli.config import DEFAULT_CLIENT_ID, load_auth_config
 from mail_triage_cli.models import MailActionResult, MailItem, SenderSummary, SentMessageResult
 
 
@@ -115,3 +116,19 @@ def test_send_command_uses_shared_mailbox_bundle(monkeypatch):
 
     assert result.exit_code == 0
     assert service.sent_calls == [(["person@example.com"], "Test", "Hello", "shared@example.com")]
+
+
+def test_load_auth_config_defaults_to_shared_client_id(monkeypatch):
+    monkeypatch.delenv("MAIL_TRIAGE_CLIENT_ID", raising=False)
+
+    config = load_auth_config()
+
+    assert config.client_id == DEFAULT_CLIENT_ID
+
+
+def test_load_auth_config_allows_client_id_override(monkeypatch):
+    monkeypatch.setenv("MAIL_TRIAGE_CLIENT_ID", "11111111-1111-1111-1111-111111111112")
+
+    config = load_auth_config()
+
+    assert config.client_id == "11111111-1111-1111-1111-111111111112"
