@@ -43,17 +43,22 @@ def load_auth_config() -> AuthConfig:
 
 def _required_client_id() -> str:
     client_id = os.environ.get("MAIL_TRIAGE_CLIENT_ID", DEFAULT_CLIENT_ID).strip()
-    if not client_id or client_id == PLACEHOLDER_CLIENT_ID:
+    if not client_id:
         raise RuntimeError(
             "MAIL_TRIAGE_CLIENT_ID must be set to a real Entra public client application ID "
             "or omitted to use the shared Midtown app. Refusing to use the placeholder client ID."
         )
     try:
-        UUID(client_id)
+        parsed_client_id = UUID(client_id)
     except ValueError as exc:
         raise RuntimeError(
             "MAIL_TRIAGE_CLIENT_ID must be a valid Entra public client application ID UUID."
         ) from exc
+    if parsed_client_id == UUID(PLACEHOLDER_CLIENT_ID):
+        raise RuntimeError(
+            "MAIL_TRIAGE_CLIENT_ID must be set to a real Entra public client application ID "
+            "or omitted to use the shared Midtown app. Refusing to use the placeholder client ID."
+        )
     return client_id
 
 
