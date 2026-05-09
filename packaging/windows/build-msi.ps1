@@ -17,8 +17,15 @@ if (Test-Path $buildDir) {
 }
 
 python -m PyInstaller --clean --noconfirm (Join-Path $root "packaging\windows\mail-triage.spec")
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $distDir "mail-triage.exe"))) {
+    throw "PyInstaller failed to produce dist\mail-triage.exe."
+}
 
+# WiX is installed in CI with: dotnet tool install --global wix --version 4.*
 $env:PATH = "$env:USERPROFILE\.dotnet\tools;$env:PATH"
+if (-not (Get-Command wix -ErrorAction SilentlyContinue)) {
+    throw "WiX CLI was not found. Install it with: dotnet tool install --global wix --version 4.*"
+}
 wix build `
     (Join-Path $root "packaging\windows\mail-triage.wxs") `
     -d Version=$Version `

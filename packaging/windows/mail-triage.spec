@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
@@ -5,6 +6,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 project_root = Path(SPECPATH).resolve().parents[1]
 datas = collect_data_files("mtg_microsoft_auth")
 hiddenimports = collect_submodules("mtg_microsoft_auth")
+use_upx = os.environ.get("BUILD_USE_UPX", "").lower() in {"1", "true", "yes"}
 
 a = Analysis(
     [str(project_root / "src" / "mail_triage_cli" / "__main__.py")],
@@ -30,7 +32,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=use_upx,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
