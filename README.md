@@ -51,6 +51,10 @@ This toy now shares the Midtown Graph token cache with the other local toys by d
 - `delete`: Delete specific messages.
 - `send`: Send a message from your mailbox or a shared mailbox you can access.
 
+## Windows MSI
+
+GitHub releases can publish a Windows MSI for `mail-triage`. The MSI installs per-machine under `Program Files` and adds the install folder to the system `PATH`, so installation requires administrator rights. If Windows blocks installation or PATH updates, rerun the installer from an elevated shell or contact IT.
+
 ## Project Site
 
 This repo includes a lightweight GitHub Pages site in `docs/`.

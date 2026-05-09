@@ -23,16 +23,22 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ github.event_name }}" -eq "release") {
-            $version = "${{ github.event.release.tag_name }}".TrimStart("v")
+            $tag = "${{ github.event.release.tag_name }}"
+            if (-not $tag.StartsWith("v")) {
+              throw "Release tags must use the vX.Y.Z format so installer URLs match release assets."
+            }
+            $version = $tag.TrimStart("v")
+            "tag=$tag" >> $env:GITHUB_OUTPUT
           } else {
             $version = "${{ inputs.version }}"
+            "tag=v$version" >> $env:GITHUB_OUTPUT
           }
           "value=$version" >> $env:GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
@@ -47,7 +53,7 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e . pyinstaller
+          python -m pip install . pyinstaller
 
       - name: Build MSI
         shell: pwsh
@@ -83,16 +89,31 @@ jobs:
           GH_TOKEN: ${{ secrets.MTG_WINGET_DISPATCH_TOKEN }}
         run: |
           $version = "${{ steps.version.outputs.value }}"
+          $tag = "${{ steps.version.outputs.tag }}"
+          $sha = "${{ steps.msi.outputs.sha256 }}"
+          $productCode = "${{ steps.msi.outputs.product_code }}"
+          if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($tag) -or [string]::IsNullOrWhiteSpace($sha) -or [string]::IsNullOrWhiteSpace($productCode)) {
+            throw "Missing version, tag, SHA256, or ProductCode for mtg-winget dispatch."
+          }
           $body = @{
             event_type = "update-package"
             client_payload = @{
               package_key = "mail-triage"
               version = $version
-              installer_url = "https://github.com/Midtown-Technology-Group/mail-triage/releases/download/v$version/mail-triage.msi"
-              sha256 = "${{ steps.msi.outputs.sha256 }}"
-              product_code = "${{ steps.msi.outputs.product_code }}"
+              installer_url = "https://github.com/Midtown-Technology-Group/mail-triage/releases/download/$tag/mail-triage.msi"
+              sha256 = $sha
+              product_code = $productCode
             }
           } | ConvertTo-Json -Depth 5
+          if ([string]::IsNullOrWhiteSpace($body)) {
+            throw "Failed to build mtg-winget dispatch payload."
+          }
           $body | Set-Content dispatch.json
+          if (-not (Test-Path dispatch.json)) {
+            throw "Failed to write dispatch.json."
+          }
           gh api repos/Midtown-Technology-Group/mtg-winget/dispatches --method POST --input dispatch.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "mtg-winget repository dispatch failed."
+          }
 
