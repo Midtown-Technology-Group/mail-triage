@@ -92,6 +92,10 @@ jobs:
           $tag = "${{ steps.version.outputs.tag }}"
           $sha = "${{ steps.msi.outputs.sha256 }}"
           $productCode = "${{ steps.msi.outputs.product_code }}"
+          if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+            Write-Warning "MTG_WINGET_DISPATCH_TOKEN is not configured; skipping mtg-winget dispatch."
+            exit 0
+          }
           if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($tag) -or [string]::IsNullOrWhiteSpace($sha) -or [string]::IsNullOrWhiteSpace($productCode)) {
             throw "Missing version, tag, SHA256, or ProductCode for mtg-winget dispatch."
           }
