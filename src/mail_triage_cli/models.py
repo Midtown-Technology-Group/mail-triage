@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MailItem(BaseModel):
@@ -27,7 +27,8 @@ class MailActionResult(BaseModel):
     mailbox: str
     count: int = 0
     folder: str | None = None
-    ids: list[str] = []
+    ids: list[str] = Field(default_factory=list)
+    failed_ids: list[str] = Field(default_factory=list)
 
 
 class SentMessageResult(BaseModel):

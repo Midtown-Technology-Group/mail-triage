@@ -53,13 +53,16 @@ class MailTriageService:
     ) -> MailActionResult:
         messages = self.repo.list_messages(limit=limit, unread_only=unread_only, folder=folder, mailbox=mailbox)
         ids = [item.id for item in messages if not item.is_read]
-        count = self.repo.mark_read(ids=ids, mailbox=mailbox, is_read=True) if ids else 0
+        completed, failed = (
+            self.repo.mark_read_batched(ids=ids, mailbox=mailbox, is_read=True) if ids else ([], [])
+        )
         return MailActionResult(
             action="mark-read",
             mailbox=mailbox,
-            count=count,
+            count=len(completed),
             folder=folder,
-            ids=ids,
+            ids=completed,
+            failed_ids=failed,
         )
 
     def move(self, ids: list[str], destination: str, mailbox: str = "me") -> MailActionResult:

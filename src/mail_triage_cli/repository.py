@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from urllib.parse import quote
 
 from mail_triage_cli.models import MailItem
@@ -20,7 +21,11 @@ class MailRepository:
             params["$filter"] = "isRead eq false"
 
         if limit > 100:
-            payload = self.client.get_all(f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages", params=params)
+            payload = self.client.get_all(
+                f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages",
+                params=params,
+                max_items=limit,
+            )
             rows = payload.get("value", [])[:limit]
         else:
             payload = self.client.get(f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages", params=params)
@@ -51,6 +56,52 @@ class MailRepository:
                 {"isRead": is_read},
             )
         return len(ids)
+
+    def mark_read_batched(
+        self,
+        ids: list[str],
+        mailbox: str = "me",
+        is_read: bool = True,
+        max_attempts: int = 3,
+    ) -> tuple[list[str], list[str]]:
+        pending = list(ids)
+        completed: list[str] = []
+        failed: list[str] = []
+
+        for attempt in range(max_attempts):
+            retry_ids: list[str] = []
+            for offset in range(0, len(pending), 20):
+                batch = pending[offset : offset + 20]
+                requests = [
+                    {
+                        "id": str(index),
+                        "method": "PATCH",
+                        "url": f"{self._mailbox_path(mailbox)}/messages/{message_id}",
+                        "headers": {"Content-Type": "application/json"},
+                        "body": {"isRead": is_read},
+                    }
+                    for index, message_id in enumerate(batch)
+                ]
+                payload = self.client.post("/$batch", {"requests": requests})
+                responses = {str(row.get("id")): row for row in payload.get("responses", [])}
+
+                for index, message_id in enumerate(batch):
+                    response = responses.get(str(index), {})
+                    status = int(response.get("status") or 0)
+                    if 200 <= status < 300:
+                        completed.append(message_id)
+                    elif status in {429, 500, 502, 503, 504} and attempt + 1 < max_attempts:
+                        retry_ids.append(message_id)
+                    else:
+                        failed.append(message_id)
+
+            pending = retry_ids
+            if not pending:
+                break
+            time.sleep(2**attempt)
+
+        failed.extend(pending)
+        return completed, failed
 
     def delete_messages(self, ids: list[str], mailbox: str = "me") -> int:
         for message_id in ids:

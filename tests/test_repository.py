@@ -28,8 +28,8 @@ class FakeGraphClient:
         self.get_calls.append((path, params))
         return {"value": self.rows}
 
-    def get_all(self, path: str, params: dict | None = None) -> dict:
-        self.get_all_calls.append((path, params))
+    def get_all(self, path: str, params: dict | None = None, max_items: int | None = None) -> dict:
+        self.get_all_calls.append((path, params, max_items))
         return {"value": self.rows}
 
 
@@ -69,5 +69,58 @@ def test_list_messages_follows_pages_and_caps_the_requested_limit():
                 "$orderby": "receivedDateTime desc",
                 "$select": "id,subject,from,receivedDateTime,isRead,importance,webLink",
             },
+            125,
         )
     ]
+
+
+class FakeBatchClient:
+    def __init__(self, responses: list[dict]) -> None:
+        self.responses = iter(responses)
+        self.posts: list[tuple[str, dict]] = []
+
+    def post(self, path: str, payload: dict) -> dict:
+        self.posts.append((path, payload))
+        return next(self.responses)
+
+
+def test_mark_read_batched_retries_transient_subrequest_failures(monkeypatch):
+    client = FakeBatchClient(
+        [
+            {
+                "responses": [
+                    {"id": "0", "status": 204},
+                    {"id": "1", "status": 429},
+                ]
+            },
+            {"responses": [{"id": "0", "status": 204}]},
+        ]
+    )
+    sleeps = []
+    monkeypatch.setattr("mail_triage_cli.repository.time.sleep", sleeps.append)
+
+    completed, failed = MailRepository(client).mark_read_batched(["one", "two"])
+
+    assert completed == ["one", "two"]
+    assert failed == []
+    assert len(client.posts) == 2
+    assert client.posts[1][1]["requests"][0]["url"] == "/me/messages/two"
+    assert sleeps == [1]
+
+
+def test_mark_read_batched_reports_permanent_failures():
+    client = FakeBatchClient(
+        [
+            {
+                "responses": [
+                    {"id": "0", "status": 204},
+                    {"id": "1", "status": 403},
+                ]
+            }
+        ]
+    )
+
+    completed, failed = MailRepository(client).mark_read_batched(["one", "two"])
+
+    assert completed == ["one"]
+    assert failed == ["two"]
