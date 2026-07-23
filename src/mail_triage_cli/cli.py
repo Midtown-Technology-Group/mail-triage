@@ -87,7 +87,7 @@ def root(
 @app.command("inbox")
 def inbox(
     ctx: typer.Context,
-    limit: int = typer.Option(10, "--limit", "-n", min=1, max=100),
+    limit: int = typer.Option(10, "--limit", "-n", min=1, max=5000),
     unread_only: bool = typer.Option(False, "--unread-only"),
     folder: str = typer.Option("inbox", "--folder"),
     mailbox: str = typer.Option("me", "--mailbox"),
@@ -101,7 +101,7 @@ def inbox(
 @app.command("senders")
 def senders(
     ctx: typer.Context,
-    limit: int = typer.Option(25, "--limit", "-n", min=1, max=200),
+    limit: int = typer.Option(25, "--limit", "-n", min=1, max=5000),
     unread_only: bool = typer.Option(False, "--unread-only"),
     folder: str = typer.Option("inbox", "--folder"),
     mailbox: str = typer.Option("me", "--mailbox"),
@@ -110,6 +110,25 @@ def senders(
     renderer = _renderer(ctx.obj["output"])
     rows = build_service().top_senders(limit=limit, unread_only=unread_only, folder=folder, mailbox=mailbox)
     renderer.render_sender_summary(rows)
+
+
+@app.command("read-matching")
+def mark_matching_read(
+    ctx: typer.Context,
+    limit: int = typer.Option(100, "--limit", "-n", min=1, max=5000),
+    unread_only: bool = typer.Option(True, "--unread-only/--include-read"),
+    folder: str = typer.Option("inbox", "--folder"),
+    mailbox: str = typer.Option("me", "--mailbox"),
+) -> None:
+    _require_write(mailbox=mailbox)
+    renderer = _renderer(ctx.obj["output"])
+    result = build_service().mark_matching_read(
+        limit=limit,
+        unread_only=unread_only,
+        folder=folder,
+        mailbox=mailbox,
+    )
+    renderer.render_status(result)
 
 
 @app.command("read")

@@ -10,17 +10,24 @@ class MailRepository:
         self.client = client
 
     def list_messages(self, limit: int, unread_only: bool = False, folder: str = "inbox", mailbox: str = "me") -> list[MailItem]:
+        page_size = min(limit, 100)
         params = {
-            "$top": limit,
+            "$top": page_size,
             "$orderby": "receivedDateTime desc",
             "$select": "id,subject,from,receivedDateTime,isRead,importance,webLink",
         }
         if unread_only:
             params["$filter"] = "isRead eq false"
 
-        payload = self.client.get(f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages", params=params)
+        if limit > 100:
+            payload = self.client.get_all(f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages", params=params)
+            rows = payload.get("value", [])[:limit]
+        else:
+            payload = self.client.get(f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages", params=params)
+            rows = payload.get("value", [])
+
         items = []
-        for row in payload.get("value", []):
+        for row in rows:
             sender = (row.get("from") or {}).get("emailAddress") or {}
             items.append(
                 MailItem(

@@ -36,6 +36,7 @@ This toy now shares the Midtown Graph token cache with the other local toys by d
 .\invoke.ps1 inbox --unread-only --limit 10
 .\invoke.ps1 senders --limit 25
 .\invoke.ps1 --output json inbox
+.\invoke.ps1 read-matching --unread-only --limit 250
 .\invoke.ps1 read AAMk... --mailbox me
 .\invoke.ps1 move AAMk... --to archive
 .\invoke.ps1 send --to person@example.com --subject "Test" --body "Hello"
@@ -46,6 +47,7 @@ This toy now shares the Midtown Graph token cache with the other local toys by d
 
 - `inbox`: List recent messages with sender, received time, and read state.
 - `senders`: Summarize the busiest senders in the selected inbox slice.
+- `read-matching`: Mark the selected unread inbox slice as read, following Graph pagination for limits above 100.
 - `read` / `unread`: Mark specific messages as read or unread.
 - `move`: Move specific messages into another folder.
 - `delete`: Delete specific messages.
