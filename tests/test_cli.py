@@ -42,6 +42,22 @@ class FakeService:
             ids=ids,
         )
 
+    def mark_matching_read(
+        self,
+        limit: int,
+        unread_only: bool = True,
+        folder: str = "inbox",
+        mailbox: str = "me",
+    ):
+        self.read_calls.append((["matching"], mailbox, True, limit, unread_only, folder))
+        return MailActionResult(
+            action="mark-read",
+            mailbox=mailbox,
+            count=1,
+            folder=folder,
+            ids=["matching"],
+        )
+
     def send(self, to, subject: str, body: str, mailbox: str = "me"):
         self.sent_calls.append((to, subject, body, mailbox))
         return SentMessageResult(mailbox=mailbox, to=to, subject=subject)
@@ -89,6 +105,19 @@ def test_read_command_uses_write_path(monkeypatch):
 
     assert result.exit_code == 0
     assert service.read_calls == [(["abc123"], "me", True)]
+
+
+def test_read_matching_command_marks_query_results(monkeypatch):
+    service = FakeService()
+    monkeypatch.setattr("mail_triage_cli.cli.build_service", lambda: service)
+    monkeypatch.setattr("mail_triage_cli.cli.has_write_scope", lambda shared_mailbox=False: True)
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["--output", "json", "read-matching", "--limit", "250"])
+
+    assert result.exit_code == 0
+    assert '"count":1' in result.stdout
+    assert service.read_calls == [(["matching"], "me", True, 250, True, "inbox")]
 
 
 def test_send_command_uses_shared_mailbox_bundle(monkeypatch):
