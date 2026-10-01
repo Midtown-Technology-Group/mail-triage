@@ -1,10 +1,10 @@
 # Mail Triage
 
-Windows-first Python/Typer operator CLI for delegated Microsoft 365 mailbox inspection and actions. `src/mail_triage_cli/` owns CLI/service/repository behavior; `tests/` contains corresponding unit tests. Read [README.md](README.md) for auth/scopes, command semantics, and MSI distribution; [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) describes a concrete notification-follow-up use case.
+Windows-first Python/Typer operator CLI for delegated Microsoft 365 mailbox inspection and actions. `src/mail_triage_cli/` owns CLI/service/repository behavior; `tests/` contains corresponding unit tests. `invoke.ps1` additionally requires `MTG_SHARED_AUTH_SRC` pointing to the shared auth `src` directory, or a sibling `mtg-microsoft-auth/src` checkout. Read [README.md](README.md) for auth/scopes, command semantics, and MSI distribution; [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) describes a concrete notification-follow-up use case.
 
 ## Development checks
 
-Use Python 3.10+ and an isolated environment: `python -m pip install -e ".[dev]"`, then `python -m pytest`. These commands follow the declared development dependency and pytest configuration, with current tests under `tests/`; a test CI lane was not found in the inspected workflows. Verify pagination, output serialization, selected-mailbox targeting, and Graph errors through mocked repository/service seams rather than real mail mutation.
+Use Python 3.10+ and an isolated environment: `python -m pip install -e ".[dev]"`, then `python -m pytest`. These commands follow the declared development dependency and pytest configuration, with current tests under `tests/`; a test CI lane was not found in the inspected workflows. For unit tests, verify pagination, output serialization, mailbox targeting, and Graph errors through mocked repository/service seams and synthetic fixtures. The separate operator acceptance in `GITHUB_WORKFLOW.md` asks for three real-inbox batches; perform those only with explicit mailbox/mutation authorization, and report them separately from unit tests.
 
 ## Operator boundaries
 
