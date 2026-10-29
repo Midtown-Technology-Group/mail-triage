@@ -33,14 +33,14 @@ class FakeGraphClient:
         return {"value": self.rows}
 
 
-def test_list_messages_uses_single_page_for_small_limits():
+def test_list_messages_bounds_pagination_for_small_limits():
     client = FakeGraphClient([_message(1)])
 
     items = MailRepository(client).list_messages(limit=25, unread_only=True)
 
     assert [item.id for item in items] == ["message-1"]
-    assert client.get_all_calls == []
-    assert client.get_calls == [
+    assert client.get_calls == []
+    assert client.get_all_calls == [
         (
             "/me/mailFolders/inbox/messages",
             {
@@ -49,6 +49,7 @@ def test_list_messages_uses_single_page_for_small_limits():
                 "$select": "id,subject,from,receivedDateTime,isRead,importance,webLink",
                 "$filter": "isRead eq false",
             },
+            25,
         )
     ]
 
