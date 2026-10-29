@@ -20,16 +20,13 @@ class MailRepository:
         if unread_only:
             params["$filter"] = "isRead eq false"
 
-        if limit > 100:
-            payload = self.client.get_all(
-                f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages",
-                params=params,
-                max_items=limit,
-            )
-            rows = payload.get("value", [])[:limit]
-        else:
-            payload = self.client.get(f"{self._mailbox_path(mailbox)}/mailFolders/{folder}/messages", params=params)
-            rows = payload.get("value", [])
+        # Graph may return a short page even when more matches exist.
+        payload = self.client.get_all(
+            f"{self._mailbox_path(mailbox)}/mailFolders/{quote(folder, safe='')}/messages",
+            params=params,
+            max_items=limit,
+        )
+        rows = payload.get("value", [])[:limit]
 
         items = []
         for row in rows:
@@ -52,7 +49,7 @@ class MailRepository:
     def mark_read(self, ids: list[str], mailbox: str = "me", is_read: bool = True) -> int:
         for message_id in ids:
             self.client.patch(
-                f"{self._mailbox_path(mailbox)}/messages/{message_id}",
+                f"{self._mailbox_path(mailbox)}/messages/{quote(message_id, safe='')}",
                 {"isRead": is_read},
             )
         return len(ids)
@@ -76,7 +73,7 @@ class MailRepository:
                     {
                         "id": str(index),
                         "method": "PATCH",
-                        "url": f"{self._mailbox_path(mailbox)}/messages/{message_id}",
+                        "url": f"{self._mailbox_path(mailbox)}/messages/{quote(message_id, safe='')}",
                         "headers": {"Content-Type": "application/json"},
                         "body": {"isRead": is_read},
                     }
@@ -105,14 +102,14 @@ class MailRepository:
 
     def delete_messages(self, ids: list[str], mailbox: str = "me") -> int:
         for message_id in ids:
-            self.client.delete(f"{self._mailbox_path(mailbox)}/messages/{message_id}")
+            self.client.delete(f"{self._mailbox_path(mailbox)}/messages/{quote(message_id, safe='')}")
         return len(ids)
 
     def move_messages(self, ids: list[str], destination: str, mailbox: str = "me") -> int:
         destination_id = self._resolve_folder_id(destination, mailbox=mailbox)
         for message_id in ids:
             self.client.post(
-                f"{self._mailbox_path(mailbox)}/messages/{message_id}/move",
+                f"{self._mailbox_path(mailbox)}/messages/{quote(message_id, safe='')}/move",
                 {"destinationId": destination_id},
             )
         return len(ids)
@@ -136,7 +133,7 @@ class MailRepository:
 
     def _resolve_folder_id(self, destination: str, mailbox: str = "me") -> str:
         try:
-            payload = self.client.get(f"{self._mailbox_path(mailbox)}/mailFolders/{destination}")
+            payload = self.client.get(f"{self._mailbox_path(mailbox)}/mailFolders/{quote(destination, safe='')}")
             folder_id = payload.get("id")
             if folder_id:
                 return folder_id
@@ -158,4 +155,4 @@ class MailRepository:
         normalized = mailbox.strip()
         if not normalized or normalized.lower() == "me":
             return "/me"
-        return f"/users/{quote(normalized)}"
+        return f"/users/{quote(normalized, safe='')}"
