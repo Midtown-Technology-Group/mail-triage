@@ -1,5 +1,7 @@
 """Offline regressions for bounded selection and opaque Graph identifiers."""
 
+from urllib.parse import parse_qsl, urlsplit
+
 import pytest
 from mtg_microsoft_auth import GraphClient
 
@@ -51,6 +53,72 @@ def test_selection_follows_short_pages_without_exceeding_limit(monkeypatch, limi
     assert calls[0][2]["params"]["$filter"] == "isRead eq false"
     assert calls[1][2]["params"] is None
     assert all(item.mailbox == "shared@example.com" for item in items)
+
+
+def test_selection_follows_three_opaque_pages_and_stops_at_total_cap(monkeypatch):
+    client = GraphClient(None)
+    calls = []
+    path = "/v1.0/users/shared%40example.com/mailFolders/folder%2Fid/messages"
+    second_query = "$skiptoken=page%2Btwo%2F%3D%26%25&$top=2"
+    third_query = "$skiptoken=page%2Bthree%2F%3D%26%25&$top=5"
+    second_url = f"https://graph.microsoft.com{path}?{second_query}"
+    third_url = f"https://graph.microsoft.com{path}?{third_query}"
+    pages = iter(
+        [
+            {"value": [message(0)], "@odata.nextLink": second_url},
+            {
+                "value": [message(1), message(2)],
+                "@odata.nextLink": third_url,
+            },
+            {
+                "value": [message(i) for i in range(3, 8)],
+                "@odata.nextLink": "https://graph.microsoft.com/v1.0/never-request",
+            },
+        ]
+    )
+
+    class Response:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def json(self):
+            return self.payload
+
+    def request(method, url, **kwargs):
+        calls.append((method, url, kwargs))
+        return Response(next(pages))
+
+    monkeypatch.setattr(client, "_request_with_retry", request)
+
+    items = MailTriageService(MailRepository(client)).inbox(
+        limit=5, unread_only=True, folder="folder/id", mailbox="shared@example.com"
+    )
+
+    assert [item.id for item in items] == [f"synthetic-{i}" for i in range(5)]
+    assert len(calls) == 3
+    assert calls[0] == (
+        "GET",
+        f"https://graph.microsoft.com{path}",
+        {
+            "params": {
+                "$top": 5,
+                "$orderby": "receivedDateTime desc",
+                "$select": "id,subject,from,receivedDateTime,isRead,importance,webLink",
+                "$filter": "isRead eq false",
+            }
+        },
+    )
+    for call, expected_url, expected_query, token, top in [
+        (calls[1], second_url, second_query, "page+two/=&%", "2"),
+        (calls[2], third_url, third_query, "page+three/=&%", "5"),
+    ]:
+        assert call == ("GET", expected_url, {"params": None})
+        parsed = urlsplit(call[1])
+        assert (parsed.scheme, parsed.netloc) == ("https", "graph.microsoft.com")
+        assert parsed.path == path
+        assert parsed.query == expected_query
+        assert parsed.fragment == ""
+        assert parse_qsl(parsed.query) == [("$skiptoken", token), ("$top", top)]
 
 
 class RecordingGraph:
