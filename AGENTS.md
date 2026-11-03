@@ -13,3 +13,15 @@ Default scope is `Mail.ReadBasic`; the shared Microsoft auth app registration st
 `inbox` and `senders` inspect mail. `read`/`unread`, `read-matching`, `move`, `delete`, and `send` mutate mail or deliver messages; in particular, `read-matching` is not a read-only listing command. Keep exact mailbox/message IDs and bounded pagination explicit in requests and previews. Sending mail requires direct authorization; a sample workflow or fixture is not authorization.
 
 Never write tokens, message bodies, or customer mailbox contents into source fixtures/logs. Use stable synthetic data and verify `--output json` remains machine-readable. A successful local test does not prove live mailbox access or delivery. Tagged MSI publishing/per-machine installation changes distribution or host state and requires the corresponding release procedure; preserve `invoke.ps1` as the Windows operator entrypoint.
+
+## Secret gate before publication
+
+Before publishing the current PR branch, commit the complete candidate and run
+`python3 scripts/secret_gate.py` (native Windows: `python`). Require exit 0;
+missing tooling/authentication, scan errors and skipped scans block publication.
+Then run the existing repository gates. Repeat after changing outgoing commits.
+Push exactly the scanned HEAD. This PR scan covers the current branch against its
+fetched intended base; other refs, multi-ref pushes and rewritten history require
+`--pre-push` with Git's complete ref-update stream. Stop if any pushed ref is
+uncovered. See [secret scanning](SECRET-SCANNING.md) for base selection, new branches,
+pre-push input and prerequisites. Preserve GitGuardian App, CI and Gitleaks checks.
